@@ -27,29 +27,65 @@ export async function onRequestPost({ request, env }) {
       });
     }
 
-    // Call Claude API - using the exact same format that worked in our direct test
-    const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': env.CLAUDE_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-3-haiku-20240307',
-        max_tokens: max_tokens,
-        messages: [
-          {
-            role: 'user',
-            content: message,
-          },
-        ],
-      }),
-    });
+    // Call Claude API with retry logic for 503 errors
+    let claudeResponse;
+    let retries = 0;
+    const maxRetries = 2;
+    
+    while (retries <= maxRetries) {
+      claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': env.CLAUDE_API_KEY,
+          'anthropic-version': '2023-06-01',
+          'User-Agent': 'WriteThinkAI/1.0',
+        },
+        body: JSON.stringify({
+          model: 'claude-3-haiku-20240307',
+          max_tokens: max_tokens,
+          messages: [
+            {
+              role: 'user',
+              content: message,
+            },
+          ],
+        }),
+      });
+
+      // If successful or not a 503 error, break out of retry loop
+      if (claudeResponse.ok || claudeResponse.status !== 503) {
+        break;
+      }
+      
+      // If 503 error and we have retries left, wait and retry
+      retries++;
+      if (retries <= maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * retries)); // Wait 1s, then 2s
+      }
+    }
 
     // Handle Claude API errors
     if (!claudeResponse.ok) {
       const errorText = await claudeResponse.text();
+      
+      // Special handling for 503 service unavailable
+      if (claudeResponse.status === 503) {
+        return new Response(JSON.stringify({ 
+          error: 'Claude API temporarily unavailable',
+          status: claudeResponse.status,
+          details: 'The AI service is temporarily overloaded. Please try again in a moment.',
+          retryAfter: '10 seconds'
+        }), {
+          status: 503,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Retry-After': '10',
+          },
+        });
+      }
+      
       return new Response(JSON.stringify({ 
         error: 'Claude API request failed',
         status: claudeResponse.status,
