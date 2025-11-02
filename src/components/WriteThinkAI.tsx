@@ -128,16 +128,24 @@ Remember: Your job is to guide their thinking process, not to provide answers or
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get response from Claude');
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`API request failed with status ${response.status}: ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('API Response:', data);
+      
+      if (!data.content) {
+        throw new Error('No content in API response');
+      }
+      
       const parsedData = JSON.parse(data.content);
       setDevelopmentData(parsedData);
       setCurrentPhase('develop');
     } catch (error) {
-      console.error('Error:', error);
-      alert('There was an error starting the development. Please try again.');
+      console.error('Development Error:', error);
+      alert(`Development error: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -182,17 +190,25 @@ Respond as a coach would - with thoughtful questions, encouragement to think dee
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get response from Claude');
+        const errorText = await response.text();
+        console.error('Chat API Error Response:', errorText);
+        throw new Error(`Chat API request failed with status ${response.status}: ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('Chat API Response:', data);
+      
+      if (!data.content) {
+        throw new Error('No content in chat API response');
+      }
+      
       const assistantMessage: ChatMessage = { role: 'assistant', content: data.content };
       setChatHistory(prev => [...prev, assistantMessage]);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Chat Error:', error);
       const errorMessage: ChatMessage = { 
         role: 'assistant', 
-        content: 'I had trouble responding. Could you try asking that again?' 
+        content: `I had trouble responding: ${error.message}. Please check the browser console for details.` 
       };
       setChatHistory(prev => [...prev, errorMessage]);
     } finally {
