@@ -64,3 +64,4 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 **Designed by [Lemiscatemind.com](https://lemiscatemind.com)**  
 *Educational technology for critical thinking and writing development*
+# WriteThink AI - Static Version
