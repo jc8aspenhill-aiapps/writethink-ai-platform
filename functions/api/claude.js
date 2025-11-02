@@ -65,7 +65,10 @@ export async function onRequestPost({ request, env }) {
       console.error('Claude API Error:', error);
       
       if (response.status === 401) {
-        return new Response(JSON.stringify({ error: 'Invalid API key' }), {
+        return new Response(JSON.stringify({ 
+          error: 'Invalid API key',
+          details: 'Check your CLAUDE_API_KEY environment variable'
+        }), {
           status: 401,
           headers: {
             'Content-Type': 'application/json',
@@ -84,7 +87,11 @@ export async function onRequestPost({ request, env }) {
         });
       }
 
-      return new Response(JSON.stringify({ error: 'Failed to process request' }), {
+      return new Response(JSON.stringify({ 
+        error: 'Claude API request failed',
+        status: response.status,
+        details: error
+      }), {
         status: 500,
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +121,11 @@ export async function onRequestPost({ request, env }) {
 
   } catch (error) {
     console.error('Function Error:', error);
-    return new Response(JSON.stringify({ error: 'Failed to process request' }), {
+    return new Response(JSON.stringify({ 
+      error: 'Failed to process request',
+      details: error.message,
+      stack: error.stack
+    }), {
       status: 500,
       headers: {
         'Content-Type': 'application/json',
