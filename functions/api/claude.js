@@ -101,11 +101,16 @@ export async function onRequestPost({ request, env }) {
     }
 
     const data = await response.json();
+    console.log('Claude API Response:', JSON.stringify(data));
     
     // Extract content from response
+    if (!data.content || !Array.isArray(data.content) || data.content.length === 0) {
+      throw new Error('Invalid response structure from Claude API');
+    }
+    
     const content = data.content[0];
     if (content.type !== 'text') {
-      throw new Error('Unexpected response type from Claude API');
+      throw new Error(`Unexpected response type: ${content.type}`);
     }
 
     // Return successful response
