@@ -112,7 +112,7 @@ Your role is to help them THINK about their argument, NOT to write for them. Gen
 Remember: Your job is to guide their thinking process, not to provide answers or write content for them.`;
 
     try {
-      const response = await fetch('/api/claude', {
+      const response = await fetch('/api/claude/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -162,7 +162,7 @@ Student just said: "${userMessage}"
 Respond as a coach would - with thoughtful questions, encouragement to think deeper, or prompts that help them discover their own insights. Keep it conversational but focused on their learning process.`;
 
     try {
-      const response = await fetch('/api/claude', {
+      const response = await fetch('/api/claude/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

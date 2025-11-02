@@ -21,9 +21,14 @@ if [ ! -d "node_modules" ]; then
     npm install
 fi
 
+# Clean any existing build cache
+echo "🧹 Cleaning build cache..."
+rm -rf .next
+
 # Start the development server
 echo "🌐 Starting development server..."
-echo "App will be available at: http://localhost:3000"
+echo "App will be available at: http://localhost:3000 (or next available port)"
+echo "Note: API routes work in development, Cloudflare Functions work in production"
 echo "Press Ctrl+C to stop the server"
 echo ""
 
