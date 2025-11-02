@@ -145,7 +145,7 @@ Remember: Your job is to guide their thinking process, not to provide answers or
       setCurrentPhase('develop');
     } catch (error) {
       console.error('Development Error:', error);
-      alert(`Development error: ${error.message}`);
+      alert(`Development error: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setLoading(false);
     }
@@ -208,7 +208,7 @@ Respond as a coach would - with thoughtful questions, encouragement to think dee
       console.error('Chat Error:', error);
       const errorMessage: ChatMessage = { 
         role: 'assistant', 
-        content: `I had trouble responding: ${error.message}. Please check the browser console for details.` 
+        content: `I had trouble responding: ${error instanceof Error ? error.message : String(error)}. Please check the browser console for details.` 
       };
       setChatHistory(prev => [...prev, errorMessage]);
     } finally {
