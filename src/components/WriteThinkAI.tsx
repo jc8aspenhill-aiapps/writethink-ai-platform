@@ -112,25 +112,8 @@ Your role is to help them THINK about their argument, NOT to write for them. Gen
 Remember: Your job is to guide their thinking process, not to provide answers or write content for them.`;
 
     try {
-      const response = await fetch('/api/claude', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          message: prompt,
-          max_tokens: 2000
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to get response from Claude');
-      }
-
-      const data = await response.json();
-      const parsedData = JSON.parse(data.content);
-      setDevelopmentData(parsedData);
-      setCurrentPhase('develop');
+      // Temporarily disabled for static export - will be re-enabled with Cloudflare Functions
+      throw new Error('API functionality temporarily disabled during deployment setup');
     } catch (error) {
       console.error('Error:', error);
       alert('There was an error starting the development. Please try again.');
@@ -162,24 +145,8 @@ Student just said: "${userMessage}"
 Respond as a coach would - with thoughtful questions, encouragement to think deeper, or prompts that help them discover their own insights. Keep it conversational but focused on their learning process.`;
 
     try {
-      const response = await fetch('/api/claude', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          message: prompt,
-          max_tokens: 500
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to get response from Claude');
-      }
-
-      const data = await response.json();
-      const assistantMessage: ChatMessage = { role: 'assistant', content: data.content };
-      setChatHistory(prev => [...prev, assistantMessage]);
+      // Temporarily disabled for static export - will be re-enabled with Cloudflare Functions
+      throw new Error('Chat functionality temporarily disabled during deployment setup');
     } catch (error) {
       console.error('Error:', error);
       const errorMessage: ChatMessage = { 

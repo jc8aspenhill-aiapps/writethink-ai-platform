@@ -1,8 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // For server-side functionality with API routes
-  serverExternalPackages: ['@anthropic-ai/sdk']
+  // Enable static export for Cloudflare Pages
+  output: 'export',
+  trailingSlash: true,
+  images: {
+    unoptimized: true
+  }
 };
 
 export default nextConfig;
