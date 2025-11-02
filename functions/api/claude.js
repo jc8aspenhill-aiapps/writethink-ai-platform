@@ -1,4 +1,4 @@
-// Cloudflare Function for Claude API calls
+// Working Cloudflare Function for Claude API calls
 export async function onRequestPost({ request, env }) {
   try {
     // Check for API key
@@ -8,8 +8,6 @@ export async function onRequestPost({ request, env }) {
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
         },
       });
     }
@@ -29,19 +27,8 @@ export async function onRequestPost({ request, env }) {
       });
     }
 
-    // Validate max_tokens
-    if (max_tokens > 4000) {
-      return new Response(JSON.stringify({ error: 'max_tokens cannot exceed 4000' }), {
-        status: 400,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-      });
-    }
-
-    // Call Claude API
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    // Call Claude API - using the exact same format that worked in our direct test
+    const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -60,39 +47,15 @@ export async function onRequestPost({ request, env }) {
       }),
     });
 
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('Claude API Error:', error);
-      
-      if (response.status === 401) {
-        return new Response(JSON.stringify({ 
-          error: 'Invalid API key',
-          details: 'Check your CLAUDE_API_KEY environment variable'
-        }), {
-          status: 401,
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-          },
-        });
-      }
-      
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), {
-          status: 429,
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-          },
-        });
-      }
-
+    // Handle Claude API errors
+    if (!claudeResponse.ok) {
+      const errorText = await claudeResponse.text();
       return new Response(JSON.stringify({ 
         error: 'Claude API request failed',
-        status: response.status,
-        details: error
+        status: claudeResponse.status,
+        details: errorText
       }), {
-        status: 500,
+        status: claudeResponse.status,
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*',
@@ -100,23 +63,13 @@ export async function onRequestPost({ request, env }) {
       });
     }
 
-    const data = await response.json();
-    console.log('Claude API Response:', JSON.stringify(data));
+    // Parse Claude response
+    const claudeData = await claudeResponse.json();
     
-    // Extract content from response
-    if (!data.content || !Array.isArray(data.content) || data.content.length === 0) {
-      throw new Error('Invalid response structure from Claude API');
-    }
-    
-    const content = data.content[0];
-    if (content.type !== 'text') {
-      throw new Error(`Unexpected response type: ${content.type}`);
-    }
-
-    // Return successful response
+    // Return the response in the format our app expects
     return new Response(JSON.stringify({
-      content: content.text,
-      usage: data.usage,
+      content: claudeData.content[0].text,
+      usage: claudeData.usage,
     }), {
       headers: {
         'Content-Type': 'application/json',
@@ -125,11 +78,9 @@ export async function onRequestPost({ request, env }) {
     });
 
   } catch (error) {
-    console.error('Function Error:', error);
     return new Response(JSON.stringify({ 
-      error: 'Failed to process request',
-      details: error.message,
-      stack: error.stack
+      error: 'Function error',
+      details: error.message
     }), {
       status: 500,
       headers: {
