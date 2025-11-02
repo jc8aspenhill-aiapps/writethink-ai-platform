@@ -71,7 +71,7 @@ export const exportToWordDocument = async (data: ExportData) => {
           new Paragraph({
             children: [
               new TextRun({ text: `${index + 1}. `, bold: true }),
-              new TextRun({ text: originalQuestion, italic: true })
+              new TextRun({ text: String(originalQuestion), italics: true })
             ],
             spacing: { before: 100, after: 50 }
           }),
@@ -100,7 +100,7 @@ export const exportToWordDocument = async (data: ExportData) => {
       })
     );
 
-    thinkingNotes.forEach(([key, value], index) => {
+    thinkingNotes.forEach(([key, value]) => {
       const promptKey = key.replace('thinking-', '');
       const originalPrompt = developmentData.thinkingPrompts[promptKey];
       
@@ -120,8 +120,9 @@ export const exportToWordDocument = async (data: ExportData) => {
           }),
           
           new Paragraph({
-            text: originalPrompt,
-            italic: true,
+            children: [
+              new TextRun({ text: String(originalPrompt), italics: true })
+            ],
             spacing: { after: 50 }
           }),
           
@@ -138,166 +139,33 @@ export const exportToWordDocument = async (data: ExportData) => {
     });
   }
 
-  // Add Argument Structure Section
-  const structureNotes = Object.entries(studentNotes).filter(([key]) => 
-    key.startsWith('intro') || key.startsWith('body') || key.startsWith('conclusion')
+  // Add simple structure notes for any other responses
+  const otherNotes = Object.entries(studentNotes).filter(([key]) => 
+    !key.startsWith('clarifying') && !key.startsWith('thinking')
   );
   
-  if (structureNotes.length > 0 && developmentData?.argumentStructure) {
+  if (otherNotes.length > 0) {
     docElements.push(
       new Paragraph({
-        text: "Argument Structure Development",
+        text: "Additional Development Notes",
         heading: HeadingLevel.HEADING_1,
         spacing: { before: 300, after: 200 }
       })
     );
 
-    // Introduction Section
-    const introNotes = structureNotes.filter(([key]) => key.startsWith('intro'));
-    if (introNotes.length > 0) {
+    otherNotes.forEach(([key, value]) => {
+      const cleanKey = key.replace(/^[^-]+-/, '').replace(/-/g, ' ');
+      
       docElements.push(
         new Paragraph({
           children: [
-            new TextRun({ text: "Introduction", bold: true, underline: { type: UnderlineType.SINGLE } })
+            new TextRun({ text: `${cleanKey}: `, bold: true }),
+            new TextRun({ text: value || "[No response provided]" })
           ],
-          spacing: { before: 100, after: 50 }
-        }),
-        new Paragraph({
-          children: [
-            new TextRun({ text: "Purpose: ", bold: true }),
-            new TextRun({ text: developmentData.argumentStructure.introduction.purpose, italic: true })
-          ],
-          spacing: { after: 100 }
+          spacing: { after: 150 }
         })
       );
-
-      introNotes.forEach(([key, value], index) => {
-        const questionIndex = parseInt(key.split('-')[1]) || index;
-        const question = developmentData.argumentStructure.introduction.questions[questionIndex];
-        
-        if (question) {
-          docElements.push(
-            new Paragraph({
-              text: question,
-              italic: true,
-              indent: { left: 360 },
-              spacing: { after: 50 }
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({ text: "Your Ideas: ", bold: true }),
-                new TextRun({ text: value || "[No response provided]" })
-              ],
-              indent: { left: 720 },
-              spacing: { after: 150 }
-            })
-          );
-        }
-      });
-    }
-
-    // Body Points Section
-    const bodyNotes = structureNotes.filter(([key]) => key.startsWith('body'));
-    if (bodyNotes.length > 0) {
-      docElements.push(
-        new Paragraph({
-          children: [
-            new TextRun({ text: "Main Points", bold: true, underline: { type: UnderlineType.SINGLE } })
-          ],
-          spacing: { before: 200, after: 50 }
-        })
-      );
-
-      // Group body notes by point
-      const bodyPointsMap: Record<string, any[]> = {};
-      bodyNotes.forEach(([key, value]) => {
-        const parts = key.split('-');
-        const pointIndex = parts[1];
-        if (!bodyPointsMap[pointIndex]) bodyPointsMap[pointIndex] = [];
-        bodyPointsMap[pointIndex].push({ key, value, questionIndex: parseInt(parts[2]) });
-      });
-
-      Object.entries(bodyPointsMap).forEach(([pointIndex, notes]) => {
-        const bodyPoint = developmentData.argumentStructure.bodyPoints[parseInt(pointIndex)];
-        if (bodyPoint) {
-          docElements.push(
-            new Paragraph({
-              children: [
-                new TextRun({ text: `Point ${parseInt(pointIndex) + 1}: `, bold: true }),
-                new TextRun({ text: bodyPoint.suggestedFocus, italic: true })
-              ],
-              spacing: { before: 100, after: 50 }
-            })
-          );
-
-          notes.forEach(({ key, value, questionIndex }) => {
-            const question = bodyPoint.developmentQuestions[questionIndex];
-            if (question) {
-              docElements.push(
-                new Paragraph({
-                  text: question,
-                  italic: true,
-                  indent: { left: 360 },
-                  spacing: { after: 50 }
-                }),
-                new Paragraph({
-                  children: [
-                    new TextRun({ text: "Your Response: ", bold: true }),
-                    new TextRun({ text: value || "[No response provided]" })
-                  ],
-                  indent: { left: 720 },
-                  spacing: { after: 150 }
-                })
-              );
-            }
-          });
-        }
-      });
-    }
-
-    // Conclusion Section
-    const conclusionNotes = structureNotes.filter(([key]) => key.startsWith('conclusion'));
-    if (conclusionNotes.length > 0) {
-      docElements.push(
-        new Paragraph({
-          children: [
-            new TextRun({ text: "Conclusion", bold: true, underline: { type: UnderlineType.SINGLE } })
-          ],
-          spacing: { before: 200, after: 50 }
-        }),
-        new Paragraph({
-          children: [
-            new TextRun({ text: "Purpose: ", bold: true }),
-            new TextRun({ text: developmentData.argumentStructure.conclusion.purpose, italic: true })
-          ],
-          spacing: { after: 100 }
-        })
-      );
-
-      conclusionNotes.forEach(([key, value], index) => {
-        const questionIndex = parseInt(key.split('-')[1]) || index;
-        const question = developmentData.argumentStructure.conclusion.questions[questionIndex];
-        
-        if (question) {
-          docElements.push(
-            new Paragraph({
-              text: question,
-              italic: true,
-              indent: { left: 360 },
-              spacing: { after: 50 }
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({ text: "Your Ideas: ", bold: true }),
-                new TextRun({ text: value || "[No response provided]" })
-              ],
-              indent: { left: 720 },
-              spacing: { after: 150 }
-            })
-          );
-        }
-      });
-    }
+    });
   }
 
   // Add chat conversation if available
@@ -310,7 +178,7 @@ export const exportToWordDocument = async (data: ExportData) => {
       })
     );
 
-    chatHistory.forEach((message, index) => {
+    chatHistory.forEach((message) => {
       const isUser = message.role === 'user';
       const speaker = isUser ? "You" : "AI Coach";
       
@@ -346,7 +214,7 @@ export const exportToWordDocument = async (data: ExportData) => {
         new Paragraph({
           children: [
             new TextRun({ text: `${index + 1}. `, bold: true }),
-            new TextRun({ text: step })
+            new TextRun({ text: String(step) })
           ],
           spacing: { after: 100 }
         })
@@ -364,7 +232,7 @@ export const exportToWordDocument = async (data: ExportData) => {
       children: [
         new TextRun({ 
           text: "Generated by WriteThink AI Platform", 
-          italic: true,
+          italics: true,
           size: 18,
           color: "666666"
         })
@@ -376,7 +244,7 @@ export const exportToWordDocument = async (data: ExportData) => {
       children: [
         new TextRun({ 
           text: "Designed by Lemiscatemind.com", 
-          italic: true,
+          italics: true,
           size: 18,
           color: "666666"
         })
@@ -388,7 +256,7 @@ export const exportToWordDocument = async (data: ExportData) => {
       children: [
         new TextRun({ 
           text: `Exported on ${new Date().toLocaleDateString()}`, 
-          italic: true,
+          italics: true,
           size: 18,
           color: "666666"
         })
